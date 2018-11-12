@@ -9,10 +9,4 @@
       <Certificate name="StockBotCert" thumbprint="995EBED618908E1FF33B906BFC9F1C757EFDC6AB" thumbprintAlgorithm="sha1" />
     </Certificates>
   </Role>
-  <Role name="HeroBot">
-    <Instances count="1" />
-    <ConfigurationSettings>
-      <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="UseDevelopmentStorage=true" />
-    </ConfigurationSettings>
-  </Role>
 </ServiceConfiguration>

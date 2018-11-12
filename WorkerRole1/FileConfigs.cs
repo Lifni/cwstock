@@ -13,14 +13,12 @@ namespace WorkerRole1
 
         private const string FolderName = "OnboardedCilents";
         private const string ClientNamesFileName = "ClientFiles.json";
-        private const string TimesToRunFileName = "TimesToRun.json";
 
         private readonly BlobContainerManager blobManager;
 
         public FileConfigs(SecureString blobConnectionString)
         {
             this.blobManager = new BlobContainerManager(blobConnectionString, BlobContainerName);
-            this.SetTimesToRun();
         }
 
         public List<TimeSpan> TimesToRun { get; protected set; }
@@ -30,19 +28,14 @@ namespace WorkerRole1
             List<string> configFiles = JsonConvert.DeserializeObject<List<string>>(
                 this.blobManager.GetFileContent(ClientNamesFileName));
             List<OnboardClient>  onboardedClients = new List<OnboardClient>();
+            ////onboardedClients.Add(JsonConvert.DeserializeObject<OnboardClient>(
+            ////        this.blobManager.GetFileContent(FolderName, "TestToMe.json")));
             configFiles.ForEach(fileName =>
             {
                 onboardedClients.Add(JsonConvert.DeserializeObject<OnboardClient>(
                     this.blobManager.GetFileContent(FolderName, fileName)));
             });
             return onboardedClients;
-        }
-
-        private void SetTimesToRun()
-        {
-            List<string> timeSpanStrings = JsonConvert.DeserializeObject<List<string>>(
-                this.blobManager.GetFileContent(TimesToRunFileName));
-            this.TimesToRun = timeSpanStrings.Select(x => TimeSpan.Parse(x)).ToList();
         }
     }
 }

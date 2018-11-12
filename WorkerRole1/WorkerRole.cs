@@ -3,15 +3,14 @@ using System.Net;
 using System.Threading;
 using Microsoft.WindowsAzure.ServiceRuntime;
 using System;
-using System.Collections.Generic;
 
 namespace WorkerRole1
 {
     public class WorkerRole : RoleEntryPoint
     {
         private readonly TimeSpan timeToWait = TimeSpan.FromMinutes(30);
-
-        private List<Timer> timers;
+        private readonly TimeSpan timeBetweenButtles = TimeSpan.FromHours(8);
+        private Timer timer;
 
         private Logger logger;
         private SecretProvider secretProvider;
@@ -20,8 +19,7 @@ namespace WorkerRole1
         public override void Run()
         {
             Trace.TraceInformation("WorkerRole1 is running");
-            
-            this.fileConfigs.TimesToRun.ForEach(x => this.SetUpTimer(x));
+
             while (true)
             {
                 this.logger.Log(987, 0, "I'm alive!");
@@ -31,12 +29,13 @@ namespace WorkerRole1
 
         public override bool OnStart()
         {
-            Thread.Sleep(Timeout.InfiniteTimeSpan);
+            //Thread.Sleep(Timeout.InfiniteTimeSpan);
 
             this.secretProvider = new SecretProvider();
             this.logger = new Logger(this.secretProvider.BlobStorageConnectionString, FileConfigs.BlobContainerName);
             this.fileConfigs = new FileConfigs(this.secretProvider.BlobStorageConnectionString);
-            this.timers = new List<Timer>();
+            this.SetUpTimer();
+            //this.timer = new Timer(x => { this.RunProcessing(); }, null, TimeSpan.FromSeconds(3), TimeSpan.FromDays(1));
 
             // Set the maximum number of concurrent connections
             ServicePointManager.DefaultConnectionLimit = 12;
@@ -60,21 +59,33 @@ namespace WorkerRole1
             Trace.TraceInformation("WorkerRole1 has stopped");
         }
         
-        private void SetUpTimer(TimeSpan alertTime)
+        private void SetUpTimer()
         {
-            TimeSpan timeToGo = alertTime - DateTime.Now.ToUniversalTime().TimeOfDay;
-            if (timeToGo < TimeSpan.Zero)
+            TimeSpan timeSpan = TimeSpan.MaxValue;
+            DateTime timeNow = DateTime.UtcNow;
+            if (timeNow.TimeOfDay < TimeSpan.FromHours(6))
             {
-                return;//time already passed
+                timeSpan = TimeSpan.FromHours(6) - DateTime.Now.ToUniversalTime().TimeOfDay;
             }
-            this.timers.Add(new Timer(x =>
+            else if (timeNow.TimeOfDay < TimeSpan.FromHours(14))
             {
-                this.RunProcessing();
-            }, null, timeToGo, TimeSpan.FromDays(1)));
+                timeSpan = TimeSpan.FromHours(14) - DateTime.Now.ToUniversalTime().TimeOfDay;
+            }
+            else if (timeNow.TimeOfDay < TimeSpan.FromHours(22))
+            {
+                timeSpan = TimeSpan.FromHours(22) - DateTime.Now.ToUniversalTime().TimeOfDay;
+            }
+            else
+            {
+                timeSpan = TimeSpan.FromHours(6) + TimeSpan.FromDays(1) - DateTime.Now.ToUniversalTime().TimeOfDay;
+            }
+
+            this.timer = new Timer(x => { this.RunProcessing(); }, null, timeSpan, TimeSpan.FromDays(1));
         }
 
         private void RunProcessing()
         {
+            this.timer = new Timer(x => { this.RunProcessing(); }, null, this.timeBetweenButtles, TimeSpan.FromDays(1));
             this.logger = new Logger(this.secretProvider.BlobStorageConnectionString, FileConfigs.BlobContainerName);
             Core core = new Core(
                 this.logger,

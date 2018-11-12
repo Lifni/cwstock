@@ -9,7 +9,7 @@ namespace WorkerRole1
 {
     public class Core
     {
-        private readonly TimeSpan timeToWait = TimeSpan.FromSeconds(30);
+        private readonly TimeSpan timeToWait = TimeSpan.FromSeconds(3);
 
         private readonly Logger logger;
         private readonly Dictionary<long, StockSheetsClient> stockClients;

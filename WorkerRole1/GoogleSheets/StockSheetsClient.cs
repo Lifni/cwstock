@@ -127,8 +127,11 @@ namespace WorkerRole1.GoogleSheets
             {
                 if (!this.knownUsers[id].Equals(name))
                 {
-                    messageToLog = $"User name was changed: @{this.knownUsers[id]} => @{name}";
+                    string oldName = this.knownUsers[id];
+
+                    messageToLog = $"User name was changed: {oldName} => {name}";
                     this.knownUsers[id] = name;
+                    this.table.Columns[oldName].ColumnName = name;
                 }
                 return;
             }
